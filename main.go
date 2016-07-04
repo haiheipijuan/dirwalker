@@ -92,7 +92,7 @@ func TraverseDir(dirPath, resultPath, ignorePath string) error {
 				return err
 			}
 			// 将文件信息写入result文件
-			_, err = io.WriteString(result, path+","+Sha1(string(content))+","+fmt.Sprintf("%d", f.Size())+"B\n")
+			_, err = io.WriteString(result, strings.Join([]string{path, Sha1(string(content)), fmt.Sprintf("%d", f.Size()) + "B\n"}, ","))
 			if err != nil {
 				return err
 			}
