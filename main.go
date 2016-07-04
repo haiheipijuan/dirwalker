@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -15,7 +16,7 @@ import (
 var (
 	dirPath    = flag.String("dir_path", "testDir", "The dir path for traverse.")
 	resultPath = flag.String("result_path", "result", "The file path for save result.")
-	ignorePath = flag.String("ignore_path", ".git", "The filepath or dirpath for ignore,use commas to separate multiple parameters.")
+	ignorePath = flag.String("ignore_path", "", "The filepath or dirpath for ignore,use commas to separate multiple parameters.")
 )
 
 func main() {
@@ -71,20 +72,27 @@ func TraverseDir(dirPath, resultPath, ignorePath string) error {
 		}
 		// 忽略指定目录或者文件
 		for _, v := range ignorePaths {
-			r := regexp.MustCompile(v)
-			if r.MatchString(path) {
-				fmt.Println("ignore file :" + path)
-				return nil
+			if v != "" {
+				r := regexp.MustCompile(v)
+				if r.MatchString(path) {
+					fmt.Println("ignore file :" + path)
+					return nil
+				}
 			}
 		}
 		if !f.IsDir() {
-			// 获取文件的绝对路径
-			// absPath, err := filepath.Abs(path)
-			// if err != nil {
-			// 	return err
-			// }
+			// 读取文件内容
+			fi, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer fi.Close()
+			content, err := ioutil.ReadAll(fi)
+			if err != nil {
+				return err
+			}
 			// 将文件信息写入result文件
-			_, err = io.WriteString(result, path+","+Sha1(path)+","+fmt.Sprintf("%d", f.Size())+"B\n")
+			_, err = io.WriteString(result, path+","+Sha1(string(content))+","+fmt.Sprintf("%d", f.Size())+"B\n")
 			if err != nil {
 				return err
 			}
